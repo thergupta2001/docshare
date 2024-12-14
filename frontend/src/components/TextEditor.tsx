@@ -6,11 +6,27 @@ function TextEditor() {
   const [underline, setUnderline] = useState<boolean>(false);
   const editorRef = useRef<HTMLDivElement>(null);
 
+  const formatArray = [
+    {
+      key: "bold",
+      value: bold,
+      symbol: "B"
+    },
+    {
+      key: "italic",
+      value: italics,
+      symbol: "I"
+    },
+    {
+      key: "underline",
+      value: underline,
+      symbol: "U"
+    }
+  ]
+
   const handleCommand = (command: string, value: string = "") => {
     editorRef.current?.focus();
-    
     document.execCommand(command, false, value);
-    // console.log(value);
     syncFormatState();
   };
 
@@ -27,42 +43,22 @@ function TextEditor() {
           DocShare
         </div>
         <div className="flex items-center gap-2">
-          <button
-            className={`px-4 py-2 rounded text-xl hover:bg-gray-200 ${
-              bold 
-                ? "bg-gray-300 text-black font-bold" 
-                : "bg-gray-50 text-black"
-            }`}
-            onClick={() => {
-              handleCommand("bold");
-            }}
-          >
-            <b>B</b>
-          </button>
-          <button
-            className={`px-4 py-2 rounded text-xl hover:bg-gray-200 ${
-              italics 
-                ? "bg-gray-300 text-black italic" 
-                : "bg-gray-50 text-black"
-            }`}
-            onClick={() => {
-              handleCommand("italic");
-            }}
-          >
-            <i>I</i>
-          </button>
-          <button
-            className={`px-4 py-2 rounded text-xl hover:bg-gray-200 ${
-              underline 
-                ? "bg-gray-300 text-black underline" 
-                : "bg-gray-50 text-black"
-            }`}
-            onClick={() => {
-              handleCommand("underline");
-            }}
-          >
-            <u>U</u>
-          </button>
+          {
+            formatArray.map((formatOption) => (
+              <button
+                key={formatOption.symbol}
+                className={`px-4 py-2 rounded text-xl hover:bg-gray-200 ${formatOption.value
+                  ? "bg-gray-300 text-black underline"
+                  : "bg-gray-50 text-black"
+                  }`}
+                onClick={() => {
+                  handleCommand(formatOption.key);
+                }}
+              >
+                {formatOption.symbol == "B" ? <b>{formatOption.symbol}</b> : formatOption.symbol == "I" ? <i>{formatOption.symbol}</i> : <u>{formatOption.symbol}</u>}
+              </button>
+            ))
+          }
           <select
             className="px-4 py-2 bg-gray-100 border border-gray-300 rounded"
             onChange={(e) => handleCommand("fontSize", e.target.value)}
