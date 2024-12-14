@@ -1,7 +1,23 @@
+import { useRef, useState } from "react";
 
 function TextEditor() {
+  const [bold, setBold] = useState<boolean>(false);
+  const [italics, setItalics] = useState<boolean>(false);
+  const [underline, setUnderline] = useState<boolean>(false);
+  const editorRef = useRef<HTMLDivElement>(null);
+
   const handleCommand = (command: string, value: string = "") => {
+    editorRef.current?.focus();
+    
     document.execCommand(command, false, value);
+    // console.log(value);
+    syncFormatState();
+  };
+
+  const syncFormatState = () => {
+    setBold(document.queryCommandState("bold"));
+    setItalics(document.queryCommandState("italic"));
+    setUnderline(document.queryCommandState("underline"));
   };
 
   return (
@@ -12,20 +28,38 @@ function TextEditor() {
         </div>
         <div className="flex items-center gap-2">
           <button
-            className="px-4 py-2 bg-gray-50 text-black rounded text-xl hover:bg-gray-200"
-            onClick={() => handleCommand("bold")}
+            className={`px-4 py-2 rounded text-xl hover:bg-gray-200 ${
+              bold 
+                ? "bg-gray-300 text-black font-bold" 
+                : "bg-gray-50 text-black"
+            }`}
+            onClick={() => {
+              handleCommand("bold");
+            }}
           >
             <b>B</b>
           </button>
           <button
-            className="px-4 py-2 bg-gray-50 text-black rounded text-xl hover:bg-gray-200"
-            onClick={() => handleCommand("italic")}
+            className={`px-4 py-2 rounded text-xl hover:bg-gray-200 ${
+              italics 
+                ? "bg-gray-300 text-black italic" 
+                : "bg-gray-50 text-black"
+            }`}
+            onClick={() => {
+              handleCommand("italic");
+            }}
           >
             <i>I</i>
           </button>
           <button
-            className="px-4 py-2 bg-gray-50 text-black rounded text-xl hover:bg-gray-200"
-            onClick={() => handleCommand("underline")}
+            className={`px-4 py-2 rounded text-xl hover:bg-gray-200 ${
+              underline 
+                ? "bg-gray-300 text-black underline" 
+                : "bg-gray-50 text-black"
+            }`}
+            onClick={() => {
+              handleCommand("underline");
+            }}
           >
             <u>U</u>
           </button>
