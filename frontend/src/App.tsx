@@ -1,13 +1,11 @@
-import './App.css'
+import TextEditor from "./components/TextEditor";
 
 function App() {
-  // const [count, setCount] = useState(0);
-
   return (
-    <>
-      <p className='text-4xl'>Hello</p>
-    </>
-  )
+    <div className="min-h-screen bg-gray-200 flex justify-center items-center">
+      <TextEditor />
+    </div>
+  );
 }
 
-export default App
+export default App;
