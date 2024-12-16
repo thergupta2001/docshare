@@ -1,4 +1,8 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { io, Socket } from "socket.io-client";
+
+const socket: Socket = io("http://localhost:8080");
+// let socket: Socket;
 
 function TextEditor() {
   const [bold, setBold] = useState<boolean>(false);
@@ -7,21 +11,9 @@ function TextEditor() {
   const editorRef = useRef<HTMLDivElement>(null);
 
   const formatArray = [
-    {
-      key: "bold",
-      value: bold,
-      symbol: "B"
-    },
-    {
-      key: "italic",
-      value: italics,
-      symbol: "I"
-    },
-    {
-      key: "underline",
-      value: underline,
-      symbol: "U"
-    }
+    { key: "bold", value: bold, symbol: "B" },
+    { key: "italic", value: italics, symbol: "I" },
+    { key: "underline", value: underline, symbol: "U" }
   ]
 
   const handleCommand = (command: string, value: string = "") => {
@@ -35,6 +27,41 @@ function TextEditor() {
     setItalics(document.queryCommandState("italic"));
     setUnderline(document.queryCommandState("underline"));
   };
+
+  const handleInput = () => {
+    if(editorRef.current) {
+      const textContent = editorRef.current.innerText || "";
+      socket.emit("text-update", textContent);
+      // console.log("Text updated: ", textContent);
+    }
+  }
+
+  // useEffect(() => {
+  //   if (!socket) {
+  //     socket = io("http://localhost:8080");
+  //   }
+
+  //   // Ensure the socket is disconnected when the component unmounts
+  //   return () => {
+  //     if (socket) {
+  //       socket.disconnect();
+  //     }
+  //   };
+  // }, [])
+
+  useEffect(() => {
+    // Listen for text updates from the server
+    socket.on("text-update", (data: string) => {
+      if (editorRef.current) {
+        editorRef.current.innerText = data;
+      }
+    });
+
+    // Clean up socket listener on component unmount
+    return () => {
+      socket.off("text-update");
+    };
+  }, []);
 
   return (
     <div className="w-full h-screen bg-gray-100">
@@ -73,6 +100,8 @@ function TextEditor() {
       </div>
 
       <div
+        ref={editorRef}
+        onInput={handleInput}
         contentEditable
         className="w-full h-[calc(100vh-64px)] p-4 border-t border-gray-300 focus:outline-none text-lg bg-white overflow-auto"
       ></div>
