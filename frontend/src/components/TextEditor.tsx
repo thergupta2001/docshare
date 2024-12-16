@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
+import { useParams } from "react-router-dom";
 import { io, Socket } from "socket.io-client";
 
 const socket: Socket = io("http://localhost:8080");
-// let socket: Socket;
 
 function TextEditor() {
+  const { roomId } = useParams<{ roomId: string }>();
+
   const [bold, setBold] = useState<boolean>(false);
   const [italics, setItalics] = useState<boolean>(false);
   const [underline, setUnderline] = useState<boolean>(false);
@@ -29,39 +31,26 @@ function TextEditor() {
   };
 
   const handleInput = () => {
-    if(editorRef.current) {
+    if (editorRef.current) {
       const textContent = editorRef.current.innerText || "";
-      socket.emit("text-update", textContent);
-      // console.log("Text updated: ", textContent);
+      socket.emit("text-update", { roomId, textContent, source: socket.id });
     }
   }
 
-  // useEffect(() => {
-  //   if (!socket) {
-  //     socket = io("http://localhost:8080");
-  //   }
-
-  //   // Ensure the socket is disconnected when the component unmounts
-  //   return () => {
-  //     if (socket) {
-  //       socket.disconnect();
-  //     }
-  //   };
-  // }, [])
-
   useEffect(() => {
-    // Listen for text updates from the server
-    socket.on("text-update", (data: string) => {
-      if (editorRef.current) {
-        editorRef.current.innerText = data;
-      }
-    });
+    if(roomId) {
+      socket.emit("join-room", roomId);
+      socket.on("text-update", (data: { textContent: string; source: string }) => {
+        if (data.source !== socket.id && editorRef.current) {
+          editorRef.current.innerText = data.textContent;
+        }
+      });
+    }
 
-    // Clean up socket listener on component unmount
     return () => {
       socket.off("text-update");
     };
-  }, []);
+  }, [roomId]);
 
   return (
     <div className="w-full h-screen bg-gray-100">
@@ -110,5 +99,3 @@ function TextEditor() {
 }
 
 export default TextEditor;
-
-

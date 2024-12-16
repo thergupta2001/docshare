@@ -1,10 +1,13 @@
+import { Routes, Route } from "react-router-dom";
 import TextEditor from "./components/TextEditor";
+import Home from "./components/Home";
 
 function App() {
   return (
-    <div className="min-h-screen bg-gray-200 flex justify-center items-center">
-      <TextEditor />
-    </div>
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/:roomId" element={<TextEditor />} />
+    </Routes>
   );
 }
 
