@@ -7,50 +7,73 @@ const socket: Socket = io("http://localhost:8080");
 function TextEditor() {
   const { roomId } = useParams<{ roomId: string }>();
 
-  const [bold, setBold] = useState<boolean>(false);
-  const [italics, setItalics] = useState<boolean>(false);
-  const [underline, setUnderline] = useState<boolean>(false);
+  // const [bold, setBold] = useState<boolean>(false);
+  // const [italics, setItalics] = useState<boolean>(false);
+  // const [underline, setUnderline] = useState<boolean>(false);
+  const [userFormats, setUserFormats] = useState({
+    bold: false,
+    italic: false,
+    underline: false
+  });
   const editorRef = useRef<HTMLDivElement>(null);
 
   const formatArray = [
-    { key: "bold", value: bold, symbol: "B" },
-    { key: "italic", value: italics, symbol: "I" },
-    { key: "underline", value: underline, symbol: "U" }
+    { key: "bold", symbol: "B" },
+    { key: "italic", symbol: "I" },
+    { key: "underline", symbol: "U" }
   ]
 
-  const handleCommand = (command: string, value: string = "") => {
+  const handleCommand = (command: string) => {
     editorRef.current?.focus();
-    document.execCommand(command, false, value);
+    document.execCommand(command);
     syncFormatState();
+
+    const htmlContent = editorRef.current?.innerHTML || "";
+    socket.emit("text-update", { roomId, htmlContent });
+
+    // console.log(userFormats);
   };
 
   const syncFormatState = () => {
-    setBold(document.queryCommandState("bold"));
-    setItalics(document.queryCommandState("italic"));
-    setUnderline(document.queryCommandState("underline"));
+    setUserFormats({
+      bold: document.queryCommandState("bold"),
+      italic: document.queryCommandState("italic"),
+      underline: document.queryCommandState("underline")
+    });
   };
 
   const handleInput = () => {
     if (editorRef.current) {
-      const textContent = editorRef.current.innerText || "";
-      socket.emit("text-update", { roomId, textContent, source: socket.id });
+      const htmlContent = editorRef.current.innerHTML;
+      socket.emit("text-update", { roomId, htmlContent });
     }
+
+    // console.log(userFormats);
   }
 
   useEffect(() => {
-    if(roomId) {
+    if (roomId) {
       socket.emit("join-room", roomId);
-      socket.on("text-update", (data: { textContent: string; source: string }) => {
+
+      socket.on("initialize-content", (htmlContent: string) => {
+        if (editorRef.current) {
+          editorRef.current.innerHTML = htmlContent;
+        }
+      });
+
+      socket.on("text-update", (data: { htmlContent: string; source: string }) => {
         if (data.source !== socket.id && editorRef.current) {
-          editorRef.current.innerText = data.textContent;
+          editorRef.current.innerHTML = data.htmlContent;
         }
       });
     }
 
     return () => {
+      socket.off("initialize-content");
       socket.off("text-update");
+      console.log(userFormats);
     };
-  }, [roomId]);
+  }, [roomId, userFormats]);
 
   return (
     <div className="w-full h-screen bg-gray-100">
@@ -62,11 +85,8 @@ function TextEditor() {
           {
             formatArray.map((formatOption) => (
               <button
-                key={formatOption.symbol}
-                className={`px-4 py-2 rounded text-xl hover:bg-gray-200 ${formatOption.value
-                  ? "bg-gray-300 text-black underline"
-                  : "bg-gray-50 text-black"
-                  }`}
+                key={formatOption.key}
+                className={`px-4 py-2 rounded text-xl hover:bg-gray-200`}
                 onClick={() => {
                   handleCommand(formatOption.key);
                 }}
@@ -75,7 +95,7 @@ function TextEditor() {
               </button>
             ))
           }
-          <select
+          {/* <select
             className="px-4 py-2 bg-gray-100 border border-gray-300 rounded"
             onChange={(e) => handleCommand("fontSize", e.target.value)}
             defaultValue="3"
@@ -84,7 +104,7 @@ function TextEditor() {
             <option value="3">Normal</option>
             <option value="5">Large</option>
             <option value="7">Huge</option>
-          </select>
+          </select> */}
         </div>
       </div>
 
